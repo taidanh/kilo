@@ -933,6 +933,57 @@ void editorSetStatusMessage(const char *fmt, ...) {
   * input *
 \***********/
 
+int isStopChr(int c, char *s) {
+    for (int i = 0; s[i] != '\0'; i += 1) {
+        if (c == s[i]) {
+            return 1;
+        } else if (c == '\0') {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void editorSpecialMovement(int key) {
+    char *stopChars = " '\"\n()[].#<>";
+
+    switch (key) {
+        case 'w':
+            while (!isStopChr(E.row[E.cy].chars[E.cx], stopChars)) {
+                editorMoveCursor(ARROW_RIGHT);
+                while (isStopChr(E.row[E.cy].chars[E.cx + 1], stopChars)) {
+                    editorMoveCursor(ARROW_RIGHT);
+                }
+            }
+            editorMoveCursor(ARROW_RIGHT);
+            break;
+        case 'b':
+            while (!isStopChr(E.row[E.cy].chars[E.cx], stopChars)) {
+                editorMoveCursor(ARROW_LEFT);
+                while (isStopChr(E.row[E.cy].chars[E.cx - 1], stopChars)) {
+                    editorMoveCursor(ARROW_LEFT);
+                }
+            }
+            editorMoveCursor(ARROW_LEFT);
+            break;
+
+        case '}':
+            E.cx = 0;
+            editorMoveCursor(ARROW_DOWN);
+            while (E.row[E.cy].size != 0) {
+                editorMoveCursor(ARROW_DOWN);
+            }
+            break;
+        case '{':
+            E.cx = 0;
+            editorMoveCursor(ARROW_UP);
+            while (E.row[E.cy].size != 0) {
+                editorMoveCursor(ARROW_UP);
+            }
+            break;
+    }
+}
+
 int editorNormalMovement(int key) {
     switch (key) {
         case 'h': return ARROW_LEFT; break;
@@ -1207,6 +1258,17 @@ void editorNormalProcessKeypress() {
         case 'o':
         case 'O':
             editorDoInsert(c);
+            break;
+
+        case 'w':
+        case 'b':
+        case '}':
+        case '{':
+            editorSpecialMovement(c);
+            break;
+
+        case 'p':
+            editorSetStatusMessage("char at %d = %d", E.rx, E.row[E.cy].chars[E.cx]);
             break;
 
         default:
